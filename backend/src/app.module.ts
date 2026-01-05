@@ -3,13 +3,26 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
+import { AuthModule } from './module/auth/auth.module';
+import { JwtModule } from '@nestjs/jwt';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
     }),
+
+    JwtModule.register({
+      global: true, // 👈 VERY IMPORTANT
+      secret: process.env.JWT_SECRET,
+      signOptions: {
+        expiresIn: Number(process.env.JWT_EXPIRES_IN),
+      },
+    }),
+
     PrismaModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
