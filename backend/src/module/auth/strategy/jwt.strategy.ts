@@ -8,7 +8,6 @@ import { PrismaService } from '../../../prisma/prisma.service';
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private prisma: PrismaService) {
-    // @ts-ignore
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -33,7 +32,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // Remove sensitive fields before returning to req.user
     // (Prisma returned the password and secrets if present)
     // we can add more keys here to exclude as needed
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {
       password,
       ...safeUser
