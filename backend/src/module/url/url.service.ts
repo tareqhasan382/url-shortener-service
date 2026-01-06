@@ -79,8 +79,22 @@ export class UrlService {
     });
   }
 
-  findAll() {
-    return `This action returns all url`;
+  async findAll(userId: string) {
+    return this.prisma.url.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        originalUrl: true,
+        shortCode: true,
+        shortUrl: true,
+        title: true,
+        description: true,
+        clickCount: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
   }
 
   findOne(id: number) {

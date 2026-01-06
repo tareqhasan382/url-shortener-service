@@ -32,8 +32,11 @@ export class UrlController {
   }
 
   @Get()
-  findAll() {
-    return this.urlService.findAll();
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get all URLs for the authenticated user' })
+  findAll(@Req() req: requestWithUserInterface.GetMe,) {
+    const userId = req.user.id;
+    return this.urlService.findAll(userId);
   }
 
   @Get(':id')
