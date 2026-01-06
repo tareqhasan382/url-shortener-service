@@ -1,15 +1,34 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
 import { UrlService } from './url.service';
 import { CreateUrlDto } from './dto/create-url.dto';
 import { UpdateUrlDto } from './dto/update-url.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ApiOperation } from '@nestjs/swagger';
+import * as requestWithUserInterface from '../user/dto/request-with-user.interface';
 
 @Controller('url')
 export class UrlController {
   constructor(private readonly urlService: UrlService) {}
 
   @Post()
-  create(@Body() createUrlDto: CreateUrlDto) {
-    return this.urlService.create(createUrlDto);
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Create a new short URL' })
+  async create(
+    @Req() req: requestWithUserInterface.GetMe,
+    @Body() createUrlDto: CreateUrlDto,
+  ) {
+    const userId = req.user.id;
+    return this.urlService.create(userId, createUrlDto);
   }
 
   @Get()
