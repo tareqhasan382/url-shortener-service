@@ -37,6 +37,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './module/auth/auth.module';
+import { UrlModule } from './module/url/url.module';
+import { UserModule } from './module/user/user.module';
 let AppModule = (() => {
     let _classDecorators = [Module({
             imports: [
