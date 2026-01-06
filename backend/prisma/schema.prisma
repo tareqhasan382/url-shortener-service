@@ -20,6 +20,13 @@ enum UserRole {
   USER
 }
 
+// Enum for user tiers
+enum UserTier {
+  FREE
+  PREMIUM
+  ENTERPRISE
+}
+
 model User {
   id           String            @id @default(uuid())
   email        String            @unique
@@ -32,9 +39,42 @@ model User {
   status       UserAccountStatus @default(ACTIVE)
   lastLogin    DateTime?
   verified     Boolean           @default(false)
+  // Plan/Tier information
+  tier         UserTier          @default(FREE)
+  urlLimit     Int               @default(100) // Maximum URLs allowed
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  url          Url[]
 
+  @@map("users")
+}
+
+// URL model for shortened URLs
+model Url {
+  id String @id @default(cuid())
+
+  // URL information
+  originalUrl String @db.Text
+  shortCode   String @unique
+  shortUrl    String
+
+  // Metadata
+  title       String?
+  description String?
+
+  // Analytics
+  clickCount Int @default(0)
+
+  // Timestamps
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("users")
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([shortCode])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("urls")
 }
