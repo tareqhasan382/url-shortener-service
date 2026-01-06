@@ -1,4 +1,4 @@
-import { Injectable ,BadRequestException} from '@nestjs/common';
+import { Injectable ,BadRequestException,NotFoundException,ForbiddenException} from '@nestjs/common';
 import { CreateUrlDto } from './dto/create-url.dto';
 import { UpdateUrlDto } from './dto/update-url.dto';
 import { customAlphabet } from 'nanoid';
@@ -97,15 +97,102 @@ export class UrlService {
     });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} url`;
+  async findOne(id: string, userId: string) {
+    const url = await this.prisma.url.findUnique({
+      where: { id },
+    });
+
+    if (!url) {
+      throw new NotFoundException('URL not found');
+    }
+
+    if (url.userId !== userId) {
+      throw new ForbiddenException('You do not have access to this URL');
+    }
+
+    return url;
   }
 
-  update(id: number, updateUrlDto: UpdateUrlDto) {
-    return `This action updates a #${id} url`;
+  async update(id: string, userId: string, updateUrlDto: UpdateUrlDto) {
+    // Check if URL exists
+    const url = await this.prisma.url.findUnique({
+      where: { id },
+    });
+
+    if (!url) {
+      throw new NotFoundException('URL not found');
+    }
+
+    const updatedUrl = await this.prisma.url.update({
+      where: { id },
+      data: {
+        title: updateUrlDto.title,
+        description: updateUrlDto.description,
+      },
+    });
+
+    return updatedUrl;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} url`;
+  async remove(id: string, userId: string) {
+    // Check if URL exists
+    const url = await this.prisma.url.findUnique({
+      where: { id },
+    });
+
+    if (!url) {
+      throw new NotFoundException('URL not found');
+    }
+
+    await this.prisma.url.delete({
+      where: { id,userId },
+    });
+
+    return { message: 'URL deleted successfully' };
+  }
+
+  // For redirect functionality
+  async redirect(shortCode: string) {
+    const url = await this.prisma.url.findUnique({
+      where: { shortCode },
+    });
+
+    if (!url) {
+      throw new NotFoundException('Short URL not found');
+    }
+
+    // Increment click count
+    await this.prisma.url.update({
+      where: { shortCode },
+      data: {
+        clickCount: { increment: 1 },
+      },
+    });
+
+    return url.originalUrl;
+  }
+
+  // Get user statistics
+  async getUserStats(userId: string) {
+    const [totalUrls, totalClicks, user] = await Promise.all([
+      this.prisma.url.count({ where: { userId } }),
+      this.prisma.url.aggregate({
+        where: { userId },
+        _sum: { clickCount: true },
+      }),
+      this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { urlLimit: true },
+      }),
+    ]);
+if (!user){
+  throw new NotFoundException('User not found');
+}
+    return {
+      totalUrls,
+      totalClicks: totalClicks._sum.clickCount || 0,
+      urlLimit: user.urlLimit,
+      remaining: user.urlLimit - totalUrls,
+    };
   }
 }
