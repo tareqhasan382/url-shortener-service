@@ -16,10 +16,15 @@ export interface UserProfile {
     createdAt: string;
     updatedAt: string;
 }
-
+export interface GetMeResponse {
+    statusCode: number;
+    success: boolean;
+    message: string;
+    data: UserProfile;
+}
 export const userApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
-        getMe: builder.query<UserProfile, void>({
+        getMe: builder.query<GetMeResponse, void>({
             query: () => ({
                 url: "/user/get-me",
                 method: "GET",
