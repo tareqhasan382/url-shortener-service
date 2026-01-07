@@ -56,7 +56,7 @@ export class UrlService {
   }
 
   async findAll(userId: string) {
-    return this.prisma.url.findMany({ where: { userId } });
+    return this.prisma.url.findMany({where: { userId }});
   }
 
   async update(id: string, userId: string, dto: UpdateUrlDto) {
