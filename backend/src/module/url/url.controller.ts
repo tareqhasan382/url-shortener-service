@@ -30,9 +30,9 @@ export class UrlController {
     return this.urlService.create(req.user.id, dto);
   }
 
-  @Get()
+  @Get("my-urls")
   @UseGuards(JwtAuthGuard)
-  findAll(@Req() req: requestWithUserInterface.GetMe) {
+  findAll(@Req() req: requestWithUserInterface.GetMe,) {
     return this.urlService.findAll(req.user.id);
   }
 
