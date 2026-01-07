@@ -1,5 +1,10 @@
 import {useMemo, useState} from "react";
-import {type UrlResponse, useDeleteUrlMutation, useMyUrlsQuery} from "../Redux/url/urlApi.ts";
+import {
+    type UrlResponse,
+    useAnalyticsOverviewQuery,
+    useDeleteUrlMutation,
+    useMyUrlsQuery
+} from "../Redux/url/urlApi.ts";
 import {toast} from "react-toastify";
 import {FiBarChart2, FiCalendar, FiCopy, FiExternalLink, FiSearch, FiTrash2} from "react-icons/fi";
 import {FaLink} from "react-icons/fa";
@@ -20,7 +25,8 @@ export const URLManagement = () => {
 
     const [searchTerm, setSearchTerm] = useState("");
     const debouncedSearchTerm = useDebounce(searchTerm, 500);
-
+    // Fetch analytics data
+    const { data: analyticsData, refetch:analyticsDataRefetch } = useAnalyticsOverviewQuery();
     const { data, isLoading, error ,refetch } = useMyUrlsQuery(
         { page, limit, search: debouncedSearchTerm },
         {
@@ -144,6 +150,7 @@ export const URLManagement = () => {
                                                 window.open(url.shortUrl, "_blank", "noopener,noreferrer");
                                                 setTimeout(() => {
                                                     refetch();
+                                                    analyticsDataRefetch()
                                                 }, 300);
                                             }}
                                             className="p-1 hover:bg-gray-100 rounded"
