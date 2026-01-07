@@ -1,46 +1,52 @@
 import { useState } from 'react';
-import { useSelector } from 'react-redux';
 import UpgradeAlert from "../components/UpgradeAlert.tsx";
-import type {RootState} from "../Redux/store.ts";
-import {useGetMeQuery} from "../Redux/user/userApi.ts";
-import {Navbar} from "./Navbar.tsx";
-import {Cards} from "./Cards.tsx";
-import {CreateShortener} from "./CreateShortener.tsx";
-import {URLManagement} from "./URLManagement.tsx";
-import {UpgradeBanner} from "./UpgradeBanner.tsx";
-import {Footer} from "./Footer.tsx";
-
+import { useGetMeQuery } from "../Redux/user/userApi.ts";
+import { Navbar } from "./Navbar.tsx";
+import { Cards } from "./Cards.tsx";
+import { CreateShortener } from "./CreateShortener.tsx";
+import { URLManagement } from "./URLManagement.tsx";
+import { UpgradeBanner } from "./UpgradeBanner.tsx";
+import { Footer } from "./Footer.tsx";
+import { useAnalyticsOverviewQuery } from "../Redux/url/urlApi.ts";
 
 const Dashboard = () => {
     const [showMobileMenu, setShowMobileMenu] = useState(false);
     const [showUpgradeAlert, setShowUpgradeAlert] = useState(false);
 
-    const { user } = useSelector((state: RootState) => state.auth);
-    const { data: userData } = useGetMeQuery(undefined, {
-        skip: !user?.id,
-    });
+    // Fetch current user
+    const { data: userData, isLoading: isUserLoading } = useGetMeQuery();
 
-    const currentUser = userData || user;
+    // Fetch analytics data
+    const { data: analyticsData, isLoading: isAnalyticsLoading } = useAnalyticsOverviewQuery();
 
-    // Calculate URL usage percentage
-    const urlUsage = currentUser?.urlLimit ? {
-        current: 95, // This should come from your URLs API
-        limit: currentUser.urlLimit,
-        percentage: (95 / currentUser.urlLimit) * 100,
-    } : { current: 0, limit: 100, percentage: 0 };
+    // Wait for both queries
+    if (isUserLoading || isAnalyticsLoading || !userData || !analyticsData) return null;
 
-    // Show upgrade alert if usage is high
-    const shouldShowUpgradeAlert = urlUsage.percentage >= 95 && currentUser?.tier === "FREE";
+    // Current user info
+    const currentUser = userData.data;
+
+    // console.log("analyticsData --->", analyticsData);
+    // console.log("currentUser --->", currentUser);
+    // console.log("userData --->", userData);
+
+    // Calculate URL usage
+    const urlUsage = currentUser?.urlLimit
+        ? {
+            current: analyticsData.totalUrls,
+            limit: currentUser.urlLimit,
+            percentage: (analyticsData.totalUrls / currentUser.urlLimit) * 100,
+        }
+        : { current: 0, limit: 100, percentage: 0 };
+
+    // Show upgrade alert if remainingUrls is 0 for FREE tier
+    const shouldShowUpgradeAlert =
+        analyticsData.remainingUrls === 0 && currentUser?.tier === "FREE";
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
             {/* Upgrade Alert */}
-            {shouldShowUpgradeAlert || showUpgradeAlert && (
-                <UpgradeAlert
-                    setShowUpgradeAlert={setShowUpgradeAlert}
-                    //currentUsage={urlUsage.current}
-                    //maxLimit={urlUsage.limit}
-                />
+            {(shouldShowUpgradeAlert || showUpgradeAlert) && (
+                <UpgradeAlert setShowUpgradeAlert={setShowUpgradeAlert} />
             )}
 
             {/* Navbar */}
@@ -92,8 +98,8 @@ const Dashboard = () => {
                     )}
                 </div>
 
-                {/* Stats Cards user={currentUser} */}
-                <Cards  />
+                {/* Stats Cards */}
+                <Cards />
 
                 {/* URL Shortener Section */}
                 <CreateShortener />
@@ -101,7 +107,7 @@ const Dashboard = () => {
                 {/* URL Management Section */}
                 <URLManagement />
 
-                {/* Upgrade Banner - Show only for free tier users */}
+                {/* Upgrade Banner - Show only for FREE tier users */}
                 {currentUser?.tier === "FREE" && <UpgradeBanner />}
             </main>
 
