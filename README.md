@@ -25,7 +25,7 @@
 <div align="center">
 
 ### Dashboard Preview
-![URL Shortener Dashboard](https://drive.google.com/file/d/1LlOzcFfA58MKH3ROdXRzIfazIBz1P_Nl/view?usp=sharing)
+![URL Shortener Dashboard](https://github.com/tareqhasan382/url-shortener-service/blob/0a68b82f83695a678f893249b744290ea2e8b94e/preview.png)
 [🖼️ View More Screenshots PDF](https://drive.google.com/file/d/1LlOzcFfA58MKH3ROdXRzIfazIBz1P_Nl/view?usp=sharing)
 
 </div>
