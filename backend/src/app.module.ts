@@ -7,6 +7,7 @@ import { AuthModule } from './module/auth/auth.module';
 import { JwtModule } from '@nestjs/jwt';
 import { UserModule } from './module/user/user.module';
 import { UrlModule } from './module/url/url.module';
+import { RedirectController } from './module/url/redirect.controller';
 
 @Module({
   imports: [
@@ -28,7 +29,7 @@ import { UrlModule } from './module/url/url.module';
     UserModule,
     UrlModule
   ],
-  controllers: [AppController],
+  controllers: [AppController,RedirectController],
   providers: [AppService],
 })
 export class AppModule {}
