@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Query,
   Post,
   Body,
   Patch,
@@ -15,6 +16,7 @@ import { UpdateUrlDto } from './dto/update-url.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiOperation } from '@nestjs/swagger';
 import * as requestWithUserInterface from '../user/dto/request-with-user.interface';
+import {GetMyUrlsDto} from "./dto/get-my-urls.dto";
 
 @Controller('url')
 export class UrlController {
@@ -32,10 +34,21 @@ export class UrlController {
 
   @Get("my-urls")
   @UseGuards(JwtAuthGuard)
-  findAll(@Req() req: requestWithUserInterface.GetMe,) {
-    return this.urlService.findAll(req.user.id);
+  findAll(
+      @Req() req: requestWithUserInterface.GetMe,
+      @Query() query: GetMyUrlsDto,
+  ) {
+    const { page, limit, search } = query;
+    return this.urlService.findAll(req.user.id, page, limit, search);
   }
-
+  @Get('analytics/overview')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'URL analytics overview' })
+  analyticsOverview(
+    @Req() req: requestWithUserInterface.GetMe,
+  ) {
+    return this.urlService.analyticsOverview(req.user.id);
+  }
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
   update(
