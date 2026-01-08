@@ -3,140 +3,301 @@ import loginImage from "../assets/login.jpg";
 import { useSignupMutation } from "../Redux/auth/authApi";
 import { useState } from "react";
 import { toast } from "react-toastify";
+
 export interface SignUpData {
-    name: string;
+    firstName: string;
+    lastName: string;
     email: string;
     password: string;
+    confirmPassword: string;
+    phone: string;
 }
-//image
+
 const SignUp = () => {
     const [signup, { isLoading, isError }] = useSignupMutation();
     const navigate = useNavigate();
 
-    const [name, setName] = useState<string>("");
-    const [email, setEmail] = useState<string>("");
-    const [password, setPassword] = useState<string>("");
+    const [formData, setFormData] = useState<SignUpData>({
+        firstName: "",
+        lastName: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        phone: "",
+    });
+
+    const [errors, setErrors] = useState<Partial<SignUpData>>({});
+
+    // Handle input changes
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
+        // Clear error for this field when user starts typing
+        if (errors[name as keyof SignUpData]) {
+            setErrors((prev) => ({
+                ...prev,
+                [name]: "",
+            }));
+        }
+    };
+
+    // Validate form
+    const validateForm = (): boolean => {
+        const newErrors: Partial<SignUpData> = {};
+
+        if (!formData.firstName.trim()) {
+            newErrors.firstName = "First name is required";
+        }
+
+        if (!formData.lastName.trim()) {
+            newErrors.lastName = "Last name is required";
+        }
+
+        if (!formData.email.trim()) {
+            newErrors.email = "Email is required";
+        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+            newErrors.email = "Email is invalid";
+        }
+
+        if (!formData.password) {
+            newErrors.password = "Password is required";
+        } else if (formData.password.length < 6) {
+            newErrors.password = "Password must be at least 6 characters";
+        }
+
+        if (!formData.confirmPassword) {
+            newErrors.confirmPassword = "Please confirm your password";
+        } else if (formData.password !== formData.confirmPassword) {
+            newErrors.confirmPassword = "Passwords do not match";
+        }
+
+        if (!formData.phone.trim()) {
+            newErrors.phone = "Phone number is required";
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
 
     // Function to handle form submission
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
+        // Validate form
+        if (!validateForm()) {
+            toast.error("Please fill all required fields correctly");
+            return;
+        }
+
         try {
-            const data: SignUpData = {
-                name,
-                email,
-                password,
-            };
+            const result = await signup(formData).unwrap();
 
-            const result = await signup(data).unwrap();
-
-            if (result) {
-                toast.success("Sign Up successful");
+            if (result.success) {
+                toast.success("Registration successful! Please login.");
                 navigate("/sign-in");
+            } else {
+                toast.error(result.message || "Registration failed");
             }
-        } catch (error) {
-            console.error("Error during login:", error);
-            toast.error("Sign Up failed. Please try again.");
+        } catch (error: any) {
+            console.error("Error during registration:", error);
+
+            // Handle specific error messages from API
+            if (error?.data?.message) {
+                toast.error(error.data.message);
+            } else if (error?.status === 409) {
+                toast.error("Email already exists");
+            } else {
+                toast.error("Registration failed. Please try again.");
+            }
         }
     };
 
     return (
-        <div className="lg:px-28 px-2 py-10 w-full h-auto bg-white flex flex-col items-center gap-10">
-            <h1 className=" text-4xl font-bold ">Sign Up</h1>
-            <div className=" w-full grid lg:grid-cols-2 items-center justify-center gap-10">
-                <div className=" w-full h-auto ">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-6xl w-full grid lg:grid-cols-2 gap-10 bg-white rounded-2xl shadow-xl overflow-hidden">
+                {/* Left side - Image */}
+                <div className="hidden lg:block">
                     <img
                         src={loginImage}
-                        alt="Login Image"
-                        className=" w-full h-full object-cover "
+                        alt="Sign Up Illustration"
+                        className="w-full h-full object-cover"
                     />
                 </div>
-                <div>
-                    <form onSubmit={handleSubmit} className="  ">
-                        <div className="relative z-0 w-full mb-6 group">
-                            <input
-                                type="text"
-                                name="name"
-                                id="name"
-                                className="block py-2.5 px-0 w-full text-sm md:text-base text-black font-semibold bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-black dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
-                                placeholder=" "
-                                // required
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                            />
-                            <label
-                                className="peer-focus:font-bold absolute text-sm md:text-base font-bold text-black duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-black peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
-                                htmlFor="name"
-                            >
-                                Name
-                                <span className=" text-red-500 text-sm md:text-base font-bold ">
-                  *
-                </span>
-                            </label>
+
+                {/* Right side - Form */}
+                <div className="p-8 sm:p-12">
+                    <div className="text-center mb-8">
+                        <h1 className="text-3xl font-bold text-gray-900">Create Account</h1>
+                        <p className="text-gray-600 mt-2">Join Short.ly and start shortening URLs</p>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Name Fields */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
+                                    First Name <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    id="firstName"
+                                    name="firstName"
+                                    value={formData.firstName}
+                                    onChange={handleInputChange}
+                                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                                        errors.firstName ? 'border-red-500' : 'border-gray-300'
+                                    }`}
+                                    placeholder="John"
+                                />
+                                {errors.firstName && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Last Name <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    id="lastName"
+                                    name="lastName"
+                                    value={formData.lastName}
+                                    onChange={handleInputChange}
+                                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                                        errors.lastName ? 'border-red-500' : 'border-gray-300'
+                                    }`}
+                                    placeholder="Doe"
+                                />
+                                {errors.lastName && (
+                                    <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>
+                                )}
+                            </div>
                         </div>
-                        <div className="relative z-0 w-full mb-6 group">
+
+                        {/* Email */}
+                        <div>
+                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                                Email Address <span className="text-red-500">*</span>
+                            </label>
                             <input
-                                type="text"
-                                name="email"
+                                type="email"
                                 id="email"
-                                className="block py-2.5 px-0 w-full text-sm md:text-base text-black font-semibold bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-black dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
-                                placeholder=" "
-                                // required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                name="email"
+                                value={formData.email}
+                                onChange={handleInputChange}
+                                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                                    errors.email ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                                placeholder="john@example.com"
                             />
-                            <label
-                                className="peer-focus:font-bold absolute text-sm md:text-base font-bold text-black duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-black peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
-                                htmlFor="floating_student_name"
-                            >
-                                Email
-                                <span className=" text-red-500 text-sm md:text-base font-bold ">
-                  *
-                </span>
-                            </label>
+                            {errors.email && (
+                                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                            )}
                         </div>
-                        <div className="relative z-0 w-full mb-6 group">
+
+                        {/* Phone */}
+                        <div>
+                            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                                Phone Number <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="tel"
+                                id="phone"
+                                name="phone"
+                                value={formData.phone}
+                                onChange={handleInputChange}
+                                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                                    errors.phone ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                                placeholder="+8801712345678"
+                            />
+                            {errors.phone && (
+                                <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+                            )}
+                        </div>
+
+                        {/* Password */}
+                        <div>
+                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                                Password <span className="text-red-500">*</span>
+                            </label>
                             <input
                                 type="password"
-                                name="password"
                                 id="password"
-                                className="block py-2.5 px-0 w-full text-sm md:text-base text-black font-semibold bg-transparent border-0 border-b-2 border-gray-300 appearance-none dark:text-black dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer"
-                                placeholder=" "
-                                // required
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                name="password"
+                                value={formData.password}
+                                onChange={handleInputChange}
+                                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                                    errors.password ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                                placeholder="••••••••"
                             />
-                            <label
-                                className="peer-focus:font-bold absolute text-sm md:text-base font-bold text-black duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-black peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
-                                htmlFor="floating_student_name"
-                            >
-                                password
-                                <span className=" text-red-500 text-sm md:text-base font-bold ">
-                  *
-                </span>
-                            </label>
+                            {errors.password && (
+                                <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+                            )}
                         </div>
+
+                        {/* Confirm Password */}
+                        <div>
+                            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                                Confirm Password <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="password"
+                                id="confirmPassword"
+                                name="confirmPassword"
+                                value={formData.confirmPassword}
+                                onChange={handleInputChange}
+                                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                                    errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                                placeholder="••••••••"
+                            />
+                            {errors.confirmPassword && (
+                                <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>
+                            )}
+                        </div>
+
+                        {/* Submit Button */}
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-black text-white font-bold py-2.5 px-4 rounded-md mt-4"
+                            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-3.5 px-4 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                         >
-                            {isLoading ? "Logging in..." : "Sign In"}
+                            {isLoading ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                                    Creating Account...
+                                </>
+                            ) : (
+                                "Create Account"
+                            )}
                         </button>
-                        <div>
-                            <h1>
-                                Already have an account ? Please{" "}
-                                <Link to="/sign-in" className=" text-blue-600 underline ">
-                                    Sign In{" "}
+
+                        {/* Error Message */}
+                        {isError && !isLoading && (
+                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                                Registration failed. Please try again.
+                            </div>
+                        )}
+
+                        {/* Login Link */}
+                        <div className="text-center pt-4 border-t border-gray-200">
+                            <p className="text-gray-600">
+                                Already have an account?{" "}
+                                <Link
+                                    to="/sign-in"
+                                    className="text-blue-600 font-semibold hover:text-blue-800 hover:underline transition-colors"
+                                >
+                                    Sign In
                                 </Link>
-                            </h1>
+                            </p>
                         </div>
                     </form>
-                    {isError && (
-                        <p className="text-red-500 mt-2">
-                            Sign Up failed. Please try again.
-                        </p>
-                    )}
                 </div>
             </div>
         </div>
