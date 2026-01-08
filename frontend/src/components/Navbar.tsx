@@ -98,18 +98,18 @@ export const Navbar = ({
 
     // Get display name
     const getDisplayName = (): string => {
-        if (!user) return "User";
+        if (!user?.data) return "User";
 
-        if (user.firstName && user.lastName) {
-            return `${user.firstName} ${user.lastName}`;
+        if (user?.data.firstName && user?.data.lastName) {
+            return `${user?.data.firstName} ${user?.data.lastName}`;
         }
 
-        if (user.firstName) {
-            return user.firstName;
+        if (user?.data.firstName) {
+            return user?.data.firstName;
         }
 
-        if (user.email) {
-            return user.email.split('@')[0];
+        if (user?.data.email) {
+            return user?.data.email.split('@')[0];
         }
 
         return "User";
