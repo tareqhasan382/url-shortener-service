@@ -7,7 +7,8 @@ import { AuthModule } from './module/auth/auth.module';
 import { JwtModule } from '@nestjs/jwt';
 import { UserModule } from './module/user/user.module';
 import { UrlModule } from './module/url/url.module';
-import { RedirectController } from './module/url/redirect.controller';
+import { RedisModule } from './redis/redis.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -27,9 +28,11 @@ import { RedirectController } from './module/url/redirect.controller';
     PrismaModule,
     AuthModule,
     UserModule,
-    UrlModule
+    UrlModule,
+    RedisModule,
+    ScheduleModule.forRoot(), 
   ],
-  controllers: [AppController,RedirectController],
+  controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}

@@ -30,175 +30,250 @@
 
 </div>
 
-## Description
+# 🔗 URL Shortener Service
 
-A modern, full-featured URL shortening web application built with React, TypeScript, Tailwind CSS, Redux Toolkit Query, and NestJS.
+A modern, full-featured URL shortening web application built with **React**, **TypeScript**, **Tailwind CSS**, **Redux Toolkit Query**, and **NestJS** — with Redis-powered caching and write-behind click tracking.
 
+---
 
-## Compile and run the project
+## 🖼️ Project Screenshots
 
-Here's a polished **README.md** file for your project “Shortening Service” with clear instructions for setting up and running the full stack (backend, frontend):
+> 📄 **[View More Screenshots PDF](#)**
 
-
-
+---
 
 ## 📂 Project Structure
 
 ```
-
 url-shortener-service/
-├── backend/    # NestJS backend
-├── frontend/       # Frontend React app
-
-````
+├── backend/        # NestJS backend
+└── frontend/       # React frontend
+```
 
 ---
 
 ## 🛠 Prerequisites
 
-- Node.js
-- npm
-- Docker & Docker Compose
-- PostgresSql (optional if using Docker)
+- [Node.js](https://nodejs.org/) (v18+)
+- [npm](https://www.npmjs.com/)
+- [Docker & Docker Compose](https://www.docker.com/)
+- PostgreSQL *(optional — Docker handles this)*
+- Redis *(optional — Docker handles this)*
 
 ---
 
 ## ⚡ Quick Start
 
 ### 1. Clone the repository
+
 ```bash
 git clone https://github.com/tareqhasan382/url-shortener-service.git
 cd url-shortener-service
-````
+```
 
-### 2. Start Database
+### 2. Start Database & Redis
 
 ```bash
 cd backend
-docker-compose up -d
+docker compose up -d
 ```
 
-This will start a PostgresSql container with the required database.
+This starts both a **PostgreSQL** and **Redis** container.
 
----
-
-### 3. Setup & Run Server
+Verify containers are running:
 
 ```bash
-cd ../backend
-cp .env.example .env   # Add your environment variables
+docker ps
+```
+
+You should see:
+```
+url-shortener-postgres   Up (healthy)
+url-shortener-redis      Up (healthy)
+```
+
+### 3. Setup & Run Backend
+
+```bash
+cd backend
+cp .env.example .env    # Fill in your environment variables
 npm install
+npx prisma migrate dev  # Run database migrations
 npm run start:dev
 ```
 
-The server will run at: `http://localhost:8000` (default)
-
----
+Backend runs at: `http://localhost:8000`
 
 ### 4. Setup & Run Frontend
 
 ```bash
-cd ../src
-cp .env.example .env   # Add your frontend environment variables
+cd frontend
+cp .env.example .env    # Fill in your environment variables
 npm install
 npm run dev
 ```
 
-The frontend will run at: `http://localhost:5173` (default Vite dev server)
+Frontend runs at: `http://localhost:5173`
 
 ---
 
-## ⚙ Environment Variables
+## ⚙️ Environment Variables
 
 ### Backend `.env`
 
-```
-# Postgres
-POSTGRES_DB=
-POSTGRES_USER=
-POSTGRES_PASSWORD=
+```dotenv
+# PostgreSQL
+POSTGRES_DB=url_shortener_service_db
+POSTGRES_USER=your_db_user
+POSTGRES_PASSWORD=your_db_password
 POSTGRES_PORT=5432
-SHORT_URL_BASE=Server Base URL Here
-# Prisma / NestJS
-DATABASE_URL=postgresql:
+
+# Prisma
+DATABASE_URL=postgresql://your_db_user:your_db_password@localhost:5434/url_shortener_service_db
+
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# App
+SHORT_URL_BASE=http://localhost:8000
+
 # Authentication
 SALT_ROUND=13
-JWT_SECRET=
-JWT_REFRESH_EXPIRES_IN=
-JWT_EXPIRES_IN=
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRES_IN=604800
+JWT_REFRESH_EXPIRES_IN=604800
 ```
 
 ### Frontend `.env`
 
-```
+```dotenv
 VITE_API_URL=http://localhost:8000
+```
+
+---
+
+## 🐳 Docker Compose
+
+Both PostgreSQL and Redis are managed via Docker Compose:
+
+```yaml
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: url-shortener-postgres
+    ports:
+      - "5434:5432"
+
+  redis:
+    image: redis:7-alpine
+    container_name: url-shortener-redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
 ```
 
 ---
 
 ## 📦 Scripts
 
-### Backend (server)
+### Backend
 
 ```bash
-npm run start       # Start in production
-npm run start:dev   # Start in development mode
-npm run build       # Build the project
+npm run start           # Start in production
+npm run start:dev       # Start in development (watch mode)
+npm run build           # Build the project
+npx prisma migrate dev  # Run migrations
+npx prisma studio       # Open Prisma Studio (DB GUI)
 ```
 
-### Frontend (src)
+### Frontend
 
 ```bash
-npm run dev         # Start dev server
-npm run build       # Build production files
-npm run preview     # Preview production build
+npm run dev             # Start dev server
+npm run build           # Build for production
+npm run preview         # Preview production build
 ```
 
 ---
 
-## 🧰 Features Implemented
+## 🧰 Features
 
 ### Frontend
-* User Authentication: Secure login/register with JWT tokens
-* Dashboard: Beautiful, responsive dashboard with real-time statistics
-* URL Management: Create, view, copy, and delete shortened URLs
-* Analytics: Track clicks and performance metrics
-* Responsive Design: Fully responsive across all devices
-* Modern UI: Clean, professional interface with Tailwind CSS
+- **User Authentication** — Secure login/register with JWT tokens
+- **Dashboard** — Responsive dashboard with real-time statistics
+- **URL Management** — Create, view, copy, and delete shortened URLs
+- **Analytics** — Track clicks and performance metrics
+- **Responsive Design** — Fully responsive across all devices
+- **Modern UI** — Clean, professional interface with Tailwind CSS
 
 ### Backend
-* RESTful API: Fully documented API endpoints
-* Authentication: JWT-based secure authentication
-* Rate Limiting: URL creation limits per user tier
-* Database: PostgreSQL with Prisma ORM
-* Type Safety: Full TypeScript implementation
+- **RESTful API** — Fully documented API endpoints
+- **JWT Authentication** — Access & refresh token support
+- **Redis Caching** — Sub-millisecond redirect response
+- **Write-Behind Click Tracking** — Atomic Redis buffering, batch Postgres update every 60s
+- **Rate Limiting** — URL creation limits per user tier
+- **PostgreSQL + Prisma ORM** — Type-safe database access
+- **Full TypeScript** — End-to-end type safety
 
-### Main Components
-* Navbar - Responsive navigation with user menu
-* Dashboard - Main dashboard with statistics
-* URL Shortener - Form to create new short URLs
-* URL Table - Manage existing URLs with search/filter
-* Stats Cards - Display key metrics
+---
 
-### 📊 Performance Metrics
-* Total URLs Created: Track per user
-* Total Clicks: Overall click count
-* Today's Activity: Real-time updates
-* Top Performers: Most clicked URLs
-* Usage Statistics: Tier-based limits
-* Upgrade Alert - Notify users when reaching limits
+## 🏗️ Architecture & System Design
+
+```
+User clicks short URL
+        │
+        ▼
+Redis cache hit? → YES → return originalUrl instantly (<1ms)
+                → NO  → Postgres query → cache → return
+
+Click count → Redis INCR (atomic, fire-and-forget)
+           → Batch flush to Postgres every 60s
+
+Analytics  → Postgres count + Redis pending buffer = real-time 
+```
+
+### Caching Strategy
+
+| Key | TTL | Purpose |
+|---|---|---|
+| `redirect:{shortCode}` | 10 min | URL redirect hot path |
+| `my-urls:{userId}:p{n}:l{n}` | 1 min | Paginated URL list |
+| `click:pending:{shortCode}` | 1 hour | Unflushed click buffer |
+
+### Performance
+
+| Operation | Before | After |
+|---|---|---|
+| Redirect | ~5ms (DB query) | ~0.5ms (Redis hit) |
+| Click write | 1 DB write/click | 0 DB writes/click |
+| DB update | Every click | Batch every 60s |
+| Analytics | 7 separate queries | 1 transaction + Redis merge |
+
+---
+
+## 📊 Analytics Metrics
+
+- **Total URLs Created** — Per user tracking
+- **Total Clicks** — Overall click count (real-time)
+- **Today's Activity** — Clicks today
+- **Weekly Growth** — This week vs last week comparison
+- **Top Performer** — Most clicked URL this week
+- **Usage Statistics** — Tier-based URL limits
+
 ---
 
 ## 🚀 Notes
 
-* Make sure Docker is running before starting the database.
-* Backend and frontend require their own `.env` files.
-* Frontend communicates with backend via `VITE_API_URL`.
+- Make sure **Docker Desktop is running** before `docker compose up -d`
+- Backend and frontend each require their own `.env` file
+- Frontend communicates with backend via `VITE_API_URL`
+- Redis uses **append-only persistence** — click data survives container restarts
+- On first run, always do `npx prisma migrate dev` before starting the server
 
 ---
 
 ## 👨‍💻 Author
 
-Tareq Hasan
-
----
+**Tareq Hasan**
+- GitHub: [@tareqhasan382](https://github.com/tareqhasan382)
